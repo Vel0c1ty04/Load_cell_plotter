@@ -1,0 +1,94 @@
+body {
+    font-family: 'Red Hat Display', sans-serif;
+    background-color: #1e1e1e;
+    color: white;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 2400px;
+    margin: 0 auto;
+    padding: 5px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.main-content {
+    display: flex;
+    gap: 10px;
+}
+
+.graph-container {
+    flex: 1;
+    background-color: #2a2a2a;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.graph {
+    height: 400px;
+}
+
+.side-panels {
+    width: 250px;
+}
+
+.panel {
+    background-color: #2a2a2a;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.panel-header {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.label {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.value {
+    margin-top: 0;
+}
+
+.status-indicator {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 10px;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.status-indicator.active {
+    opacity: 1;
+}
+
+.status-label {
+    display: inline-block;
+    margin: 0;
+}
+
+.safe { background-color: #4CAF50; }
+.arm { background-color: #FFC107; }
+.launch { background-color: #F44336; }
+
+.motor-panel {
+    background-color: #2a2a2a;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.motor-details {
+    margin: 0;
+}
