@@ -14,116 +14,212 @@ import plotly.graph_objects as go
 mode =  1 #select mode 1 for live data mode 0 for csv data
 current_index = 0
 df = pd.DataFrame(columns = ['time','load'])
-csv_file2 = r'empty_csv_file'
+csv_file2 = r"C:\Users\Vanshdeep Trivedi\OneDrive\Desktop\loadcell10.csv"
+current_state = "SAFE"
 
-#read from arduino (close serial monitor)
+# Function to read from Arduino (serial port)
 def get_arduino_data():
-    global csv_file2
-    port = 'COM9'
+    global csv_file2, current_state, df
+    port = 'COM12'
     baud = 9600
     ser = serial.Serial(port, baud, timeout=1)
 
     try:
-        df=pd.read_csv(csv_file2)
+        df = pd.read_csv(csv_file2)
     except FileNotFoundError:
         print("file not found")
-    print('connected to arduino at port: ',port)
+    print('connected to arduino at port: ', port)
+
     try:
         while True:
             if ser.in_waiting > 0:
-                line = ser.readline().decode('ascii',errors='ignore').rstrip()
-                try:
-                    load = float(line)
-                    current_time = time.strftime('%H:%M:%S')
-                    new_data = pd.DataFrame([[current_time, load]],columns=['time','load'])
+                line = ser.readline().decode('ascii', errors='ignore').rstrip()
+                #print(line)
 
-                    new_data.to_csv(csv_file2, mode='a',header=False, index=False)
+                # Check for status updates in the line
+                if "TESTBED STATE:" in line:
+                    if ':' in line:
+                        try:
+                            current_state = line .split(":")[1].strip()
+                            print(f"status: {current_state}")
+                        except PermissionError:
+                            current_state = line.split(":")[1].strip()
+                            print(f"status: {current_state}")
+                        except ValueError:
+                            pass
 
-                    print(f"time: {current_time}, load: {load}")
+                # Check if line contains load data in 'timestamp:load' format
+                elif ':' in line and current_state == "LAUNCHED":
+                    try:
+                        timestamp, load = line.split(':')
+                        load = float(load)
+                        
+                        new_data = pd.DataFrame([[timestamp, load]], columns=['time', 'load'])
+                        
+                        new_data.to_csv(csv_file2, mode='a', header=False, index=False)
+                        
+                    except PermissionError:
+                        timestamp, load = line.split(':')
+                        load = float(load)
+                        new_data = pd.DataFrame([[timestamp,load]],columns=['time','load'])
+                        
+                        new_data.to_csv(csv_file2,mode='a',header=False,index=False)
+                        
+                    except ValueError:
+                        pass
+                else:
+                    print(line)
 
-                except ValueError:
-                    pass
-    #enter ctrl+c for closing serial line
+    # Enter ctrl+c for closing the serial line
     except KeyboardInterrupt:
         ser.close()
 
-#gets data for plotting 
+# Function to read CSV data
 def get_csv_data():
-    global df, current_index, csv_file2
-    csv_file = r"file_with_data"
+    global df, current_index, csv_file2, current_state
+    csv_file = r"C:\Users\Vanshdeep Trivedi\OneDrive\Desktop\loadcell9.csv"
+    
 
-    if mode == 1:
+    if mode == 1 and current_state == "LAUNCHED":
         if os.path.exists(csv_file2):
-            df = pd.read_csv(csv_file2, usecols=['time','load'])
+            df = pd.read_csv(csv_file2, usecols=['time', 'load'])
             current_index = 0
-
+            
     else:
         if os.path.exists(csv_file):
-            df=pd.read_csv(csv_file, usecols=['time','load'])
+            df = pd.read_csv(csv_file, usecols=['time', 'load'])
             current_index = 0
+            
 
-#reads the data from the csv
-def plot_data():
-    global df, current_index, mode, csv_file2
+# Function to plot data
+def plot_data(df):
+    global current_index
 
-    if mode==1:
-        df=pd.read_csv(csv_file2, usecols=['time','load'])
 
     if current_index < len(df):
-        plotdata = df.iloc[:current_index+1]
-        current_index +=1
+        plotdata = df.iloc[:current_index + 1]
+        current_index += 1
     else:
         plotdata = df
+    
 
     return plotdata
 
-#graph settings   
+# Function to generate the graph
 def graph():
-    pdata = plot_data()
+    global current_state
+    if current_state == "LAUNCHED":
+        pdata = plot_data()
+        print(pdata)
 
-    load_fig = px.line(pdata, x='time',y='load', title='load vs time', markers=True
-                           , range_y=[pdata['load'].min()-5, pdata['load'].max()+200])
+        load_fig = px.line(pdata, x='time', y='load', title='', markers=True,
+                       range_y=[pdata['load'].min() - 5, pdata['load'].max() + 200])
     
-    load_fig.update_traces(line = dict(color='blue',width=2), mode='lines+markers', marker=dict(color='blue', size=2))
+        load_fig.update_traces(line=dict(color='white', width=2), mode='lines+markers', marker=dict(color='white', size=2))
+        load_fig.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font_color='white',
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=False)
+        )
 
-    latest_val =[
-        html.Div(f"load: {pdata['load'].iloc[-1]:.2f}")
-    ]
+        latest_load = f"{pdata['load'].iloc[-1]:.2f}" if len(pdata) > 0 else "N/A"
+        latest_timestamp = pdata['time'].iloc[-1] if len(pdata) > 0 else "N/A"
+        return load_fig, latest_load, latest_timestamp, current_state
+    else:
+        return go.Figure(), "N/A", "N/A", current_state
 
-    return load_fig, latest_val
+# Web app layout
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG, '/assets/extsheet.css'])
 
-#webapp settings
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
-
-app.layout= html.Div([
-    html.H1("Sensor data", style={'textAlign':'center'}),
-
-    html.H3('latest values',style={'textAlign':'center'}),
-
-    html.Div(id='latest-values', style={'textAlign':'center','margin':'20px'}),
-
-    dcc.Graph(id='load-graph',animate=False,style={'height':'400px','width':'100%',}),
+app.layout = html.Div([
+    html.H1("thrustMIT Data Plotter", className='header'),
+    
+    html.Div([
+        html.Div([
+            dcc.Graph(id='graph', config={'displayModeBar': False}, className='graph')
+        ], className='graph-container'),
+        
+        html.Div([
+            html.Div([
+                html.H3('Latest values', className='panel-header'),
+                html.Div([
+                    html.P('Load:', className='label'),
+                    html.P(id='latest-load', className='value')
+                ]),
+                html.Div([
+                    html.P('Timestamp:', className='label'),
+                    html.P(id='latest-timestamp', className='value')
+                ])
+            ], className='panel'),
+            
+            html.Div([
+                html.H3('Status', className='panel-header'),
+                html.Div([
+                    html.Div(id='safe-indicator', className='status-indicator safe'),
+                    html.P('SAFE', className='status-label')
+                ]),
+                html.Div([
+                    html.Div(id='arm-indicator', className='status-indicator arm'),
+                    html.P('ARM', className='status-label')
+                ]),
+                html.Div([
+                    html.Div(id='launch-indicator', className='status-indicator launch'),
+                    html.P('LAUNCH', className='status-label')
+                ]),
+            ], className='panel'),
+        ], className='side-panels'),
+    ], className='main-content'),
+    
+    html.Div([
+        html.H3('Motor Details', className='panel-header'),
+        html.P(id='motor-details', className='motor-details')
+    ], className='motor-panel'),
 
     dcc.Interval(
         id='interval-component',
-        interval=100,#reduce the interval value for faster updates 
+        interval=300,
         n_intervals=0
     )
-])
+], className='container')
 
+# Callback to update the graph and values
 @app.callback(
-    [Output('load-graph','figure'),
-     Output('latest-values','children')],
-     [Input('interval-component','n_intervals')]
+    [Output('graph', 'figure'),
+     Output('latest-load', 'children'),
+     Output('latest-timestamp', 'children'),
+     Output('motor-details', 'children'),
+     Output('safe-indicator', 'className'),
+     Output('arm-indicator', 'className'),
+     Output('launch-indicator', 'className')],
+    [Input('interval-component', 'n_intervals')]
 )
-
 def update_graph(n):
-    return graph()
+    global current_state
+    #if current_state != "LAUNCHED":
+        #return dash.no_update
+    
+    fig, load, timestamp, status = graph()
+    motor_details ="nah"
+    
+    safe_class = 'status-indicator safe'
+    arm_class = 'status-indicator arm'
+    launch_class = 'status-indicator launch'
+    
+    if status == 'SAFE':
+        safe_class += ' active'
+    elif status == 'ARM':
+        arm_class += ' active'
+    elif status == 'LAUNCH':
+        launch_class += ' active'
+    
+    return fig, load, timestamp, motor_details, safe_class, arm_class, launch_class
 
-if __name__=='__main__':
+# Main function to run the app
+if __name__ == '__main__':
     if mode == 1:
         threading.Thread(target=get_arduino_data, daemon=True).start()
-        
     else:
         get_csv_data()
 
