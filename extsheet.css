@@ -1,71 +1,78 @@
-body {
+body { /*for the whole body of the webapp */
     font-family: 'Red Hat Display', sans-serif;
     background-color: #1e1e1e;
     color: white;
     margin: 0;
     padding: 0;
+    font-size: 36px;
 }
 
-.container {
+.container { /*body container*/
     max-width: 2400px;
     margin: 0 auto;
-    padding: 5px;
+    padding: 10px;
 }
 
 .header {
     text-align: center;
-    margin-bottom: 5px;
+    margin-bottom: 20px;
+    font-size: 54px;
 }
 
 .main-content {
     display: flex;
-    gap: 10px;
+    gap: 20px;
 }
 
-.graph-container {
-    flex: 1;
+.graph-container { /*graph panel*/
+    flex: 4;
     background-color: #2a2a2a;
-    border-radius: 10px;
-    padding: 10px;
+    border-radius: 15px;
+    padding: 20px;
 }
 
 .graph {
-    height: 400px;
+    height: 600px;
 }
 
-.side-panels {
-    width: 250px;
+.side-panels {/*latest value panel*/
+    flex: 1;
+    display: flex; 
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .panel {
     background-color: #2a2a2a;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 10px;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 3px;
 }
 
 .panel-header {
     margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 18px;
+    margin-bottom: 20px;
+    font-size: 24px;
 }
 
 .label {
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 45px;
+    font-size: 20px;
 }
 
 .value {
     margin-top: 0;
+    font-size: 22px;
 }
 
-.status-indicator {
-    width: 15px;
-    height: 15px;
+.status-indicator {/*status panel*/
+    width: 25px;
+    height: 25px;
     border-radius: 50%;
     display: inline-block;
-    margin-right: 10px;
-    opacity: 0.3;
+    margin-right: 5px;
+    opacity: 0.2;
     transition: opacity 0.3s ease;
 }
 
@@ -76,19 +83,24 @@ body {
 .status-label {
     display: inline-block;
     margin: 0;
+    margin-top: 25px;
+    font-size: 22px;
+    font-weight: bold;
 }
 
 .safe { background-color: #4CAF50; }
 .arm { background-color: #FFC107; }
 .launch { background-color: #F44336; }
 
-.motor-panel {
+.motor-panel {/*motor details panel*/
     background-color: #2a2a2a;
-    border-radius: 10px;
-    padding: 10px;
-    margin-top: 10px;
+    border-radius: 15px;
+    padding: 15px;
+    margin-top: 20px;
+    height: 450px;
 }
 
 .motor-details {
     margin: 0;
+    font-size: 22px;
 }
